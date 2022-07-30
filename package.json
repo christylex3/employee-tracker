@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "inquirer": "^6.5.2",
+    "mysql2": "^2.3.3"
+  }
+}
