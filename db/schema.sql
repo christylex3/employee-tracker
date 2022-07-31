@@ -21,7 +21,7 @@ CREATE TABLE role (
     FOREIGN KEY (department_id) REFERENCES department(id)
 );
 
--- Creates the table called employee
+-- Employee table
 CREATE TABLE employee (
     id INT NOT NULL,
     first_name VARCHAR(30),
@@ -30,5 +30,4 @@ CREATE TABLE employee (
     manager_id INT NOT NULL REFERENCES employee(id),
     PRIMARY KEY (id),
     FOREIGN KEY (role_id) REFERENCES role(id)
-
 );
