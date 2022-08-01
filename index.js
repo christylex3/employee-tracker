@@ -32,6 +32,7 @@ function startQuestion() {
 			// Depending on what the answer is, execute the following code for the case
             switch (answer.userAnswer) {
                 case "View All Employees":
+                    // Once user choose this, console.table the data table that has the 
                     break;
                 case "Add Employee":
                     break;
