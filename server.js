@@ -11,11 +11,15 @@ app.use(express.json());
 
 // Connect to database
 const db = mysql.createConnection(
-    {
-        host: "localhost",
-        user: "root",
-        password: "root123",
-        database: "business_db",
-    },
-    console.log(`Connected to the business_db database.`)
+	{
+		host: "localhost",
+		user: "root",
+		password: "root123",
+		database: "business_db",
+	},
+	console.log(`Connected to the business_db database.`)
 );
+
+// app.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+// });
