@@ -66,25 +66,17 @@ function startQuestion() {
 		.then((answer) => {
 			// Depending on what the answer is, execute the following code for the case
 			switch (answer.userAnswer) {
+				// TODO: To get table to show first before asking the question again
+				// Need promise?
 				case "View All Employees":
-					// TODO: To get table to show first before asking the question again
-					// Need promise?
-					getAllEmployee();
+					getAllEmployees();
 					break;
 				case "Add Employee":
 					break;
 				case "Update Employee":
 					break;
 				case "View All Roles":
-					const allRoleSql = `SELECT * FROM role`;
-					db.query(allRoleSql, (err, rows) => {
-						if (err) {
-							console.log(err);
-							return;
-						}
-						let allRoleTable = consoleTable.getTable(rows);
-						console.log(allRoleTable);
-					});
+					getAllRoles();
 					break;
 				case "Add Role":
 					// Prompt user to answer questions for adding role
@@ -117,13 +109,11 @@ function startQuestion() {
 				case "Quit":
 					console.log("Goodbye");
 			}
-
 			// If the user does not choose 'Quit", continue prompting them with the question
 			if (answer.userAnswer !== "Quit") {
 				startQuestion();
 			}
 		})
-
 		// If there is an error, catch the error and print it
 		.catch((error) => {
 			if (error) {
@@ -132,7 +122,7 @@ function startQuestion() {
 		});
 }
 
-function getAllEmployee() {
+function getAllEmployees() {
 	// id, first name, last name, title, department, salary, manager
 	const allEmployeeSql = `SELECT e1.id, e1.first_name, e1.last_name, role.title, department.name AS department, role.salary, CONCAT(e2.first_name,' ', e2.last_name) AS manager
 	FROM (((employee e1
@@ -149,7 +139,23 @@ function getAllEmployee() {
 	});
 }
 
+function getAllRoles() {
+	// id, title, department, salary
+	const allRoleSql = `SELECT role.id, role.title, department.name AS department, role.salary 
+	FROM role
+	LEFT JOIN department on role.department_id = department.id`;
+	db.query(allRoleSql, (err, rows) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		let allRoleTable = consoleTable.getTable(rows);
+		console.log(`\n\n${allRoleTable}`);
+	});
+}
+
 function getAllDepartments() {
+	// id, department
 	const allDepartmentSql = `SELECT * FROM department`;
 	db.query(allDepartmentSql, (err, rows) => {
 		if (err) {
