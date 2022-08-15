@@ -149,7 +149,17 @@ function getAllEmployee() {
 	});
 }
 
-
+function getAllDepartments() {
+	const allDepartmentSql = `SELECT * FROM department`;
+	db.query(allDepartmentSql, (err, rows) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		let allDepartmentTable = consoleTable.getTable(rows);
+		console.log(`\n\n${allDepartmentTable}`);
+	});
+}
 
 // Calls this function to begin prompting user with the question
 startQuestion();
