@@ -46,39 +46,46 @@ function startQuestion() {
 	inquirer
 		.prompt(whatToDoQuestion)
 		.then((answer) => {
-			// console.log(answer);
-			// console.log(answer.userAnswer);
-
 			// Depending on what the answer is, execute the following code for the case
 			switch (answer.userAnswer) {
 				case "View All Employees":
-					const sql = `SELECT * FROM employee`;
-					console.log(sql);
-					db.query(sql, (err, rows) => {
+					const allEmployeeSql = `SELECT * FROM employee`;
+					db.query(allEmployeeSql, (err, rows) => {
 						if (err) {
 							console.log(err);
 							return;
 						}
-						// console.log(rows);
 						let allEmployeeTable = consoleTable.getTable(rows);
 						console.log(allEmployeeTable);
-						// res.json({
-						// 	message: "Successfully retrieved all employees",
-						// 	data: res,
-						// });
 					});
-					// Once user choose this, console.table the data table that has the
-					// simple query
 					break;
 				case "Add Employee":
 					break;
 				case "Update Employee":
 					break;
 				case "View All Roles":
+					const allRoleSql = `SELECT * FROM role`;
+					db.query(allRoleSql, (err, rows) => {
+						if (err) {
+							console.log(err);
+							return;
+						}
+						let allRoleTable = consoleTable.getTable(rows);
+						console.log(allRoleTable);
+					});
 					break;
 				case "Add Role":
 					break;
 				case "View All Departments":
+					const allDepartmentSql = `SELECT * FROM department`;
+					db.query(allDepartmentSql, (err, rows) => {
+						if (err) {
+							console.log(err);
+							return;
+						}
+						let allRoleTable = consoleTable.getTable(rows);
+						console.log(allRoleTable);
+					});
 					break;
 				case "Add Department":
 					break;
@@ -102,7 +109,3 @@ function startQuestion() {
 
 // Calls this function to begin prompting user with the question
 startQuestion();
-
-app.listen(PORT, () => {
-	console.log(`Server running on port ${PORT}`);
-});
