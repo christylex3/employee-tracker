@@ -41,6 +41,24 @@ const whatToDoQuestion = [
 	},
 ];
 
+const roleQuestions = [
+	{
+		type: "input",
+		message: "What will be the title of this role?",
+		name: "roleTitle",
+	},
+	{
+		type: "input",
+		message: "What will be the salary for this role?",
+		name: "roleSalary",
+	},
+	{
+		type: "input",
+		message: "What department will this role be under?",
+		name: "roleDepartment",
+	},
+]
+
 // Begins prompting user with a question about what user wants to do
 function startQuestion() {
 	inquirer
@@ -49,15 +67,9 @@ function startQuestion() {
 			// Depending on what the answer is, execute the following code for the case
 			switch (answer.userAnswer) {
 				case "View All Employees":
-					const allEmployeeSql = `SELECT * FROM employee`;
-					db.query(allEmployeeSql, (err, rows) => {
-						if (err) {
-							console.log(err);
-							return;
-						}
-						let allEmployeeTable = consoleTable.getTable(rows);
-						console.log(allEmployeeTable);
-					});
+					// TODO: To get table to show first before asking the question again
+					// Need promise?
+					getAllEmployee();
 					break;
 				case "Add Employee":
 					break;
@@ -75,17 +87,30 @@ function startQuestion() {
 					});
 					break;
 				case "Add Role":
+					// Prompt user to answer questions for adding role
+					// Then store their answer as the params for the sql call
+					// Finally, use that sequel call
+					inquirer
+						.prompt(roleQuestions)
+						.then((roleAnswer) => {
+							// let title = roleAnswer.roleTitle;
+							// let salary = roleAnswer.roleSalary;
+							// let department = roleAnswer.roleDepartment;
+							const addRoleSql = `INSERT INTO role (title, salary, department_id)
+							VALUES (?, ?, ?)`;
+							let params = [roleAnswer.roleTitle, roleAnswer.roleSalary, roleAnswer.roleDepartment];
+							db.query(addRoleSql, params, (err, result) => {
+								if (err) {
+									console.log(err);
+									return;
+								}
+								// let addRoleTable = consoleTable.getTable(result);
+								console.log(result);
+								})
+						});
 					break;
 				case "View All Departments":
-					const allDepartmentSql = `SELECT * FROM department`;
-					db.query(allDepartmentSql, (err, rows) => {
-						if (err) {
-							console.log(err);
-							return;
-						}
-						let allRoleTable = consoleTable.getTable(rows);
-						console.log(allRoleTable);
-					});
+					getAllDepartments();
 					break;
 				case "Add Department":
 					break;
@@ -106,6 +131,25 @@ function startQuestion() {
 			}
 		});
 }
+
+function getAllEmployee() {
+	// id, first name, last name, title, department, salary, manager
+	const allEmployeeSql = `SELECT e1.id, e1.first_name, e1.last_name, role.title, department.name AS department, role.salary, CONCAT(e2.first_name,' ', e2.last_name) AS manager
+	FROM (((employee e1
+	LEFT JOIN role ON e1.role_id = role.id)
+	LEFT JOIN department ON role.department_id = department.id)
+	LEFT JOIN employee e2 ON e1.manager_id = e2.id)`;
+	db.query(allEmployeeSql, (err, rows) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		let allEmployeeTable = consoleTable.getTable(rows);
+		console.log(`\n\n${allEmployeeTable}`);
+	});
+}
+
+
 
 // Calls this function to begin prompting user with the question
 startQuestion();
