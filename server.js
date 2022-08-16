@@ -41,6 +41,8 @@ const whatToDoQuestion = [
 	},
 ];
 
+let departmentArray = ["Engineering", "Finance", "Legal", "Sales"];
+
 const employeeQuestions = [
 	{
 		type: "input",
@@ -62,18 +64,19 @@ const employeeQuestions = [
 const roleQuestions = [
 	{
 		type: "input",
-		message: "What will be the title of this role?",
+		message: "What is the name of this role?",
 		name: "roleTitle",
 	},
 	{
 		type: "input",
-		message: "What will be the salary for this role?",
+		message: "What is the salary for this role?",
 		name: "roleSalary",
 	},
 	{
-		type: "input",
-		message: "What department will this role be under?",
+		type: "list",
+		message: "Which department will this role be under?",
 		name: "roleDepartment",
+		choices: departmentArray,
 	},
 ];
 
@@ -100,7 +103,7 @@ function startQuestion() {
 			} else if (data.userAnswer == "View All Roles") {
 				getAllRoles();
 			} else if (data.userAnswer == "Add Role") {
-				// addRole();
+				addRole();
 			} else if (data.userAnswer == "View All Departments") {
 				getAllDepartments();
 			} else if (data.userAnswer == "Add Department") {
@@ -163,6 +166,28 @@ function getAllRoles() {
 	startQuestion();
 }
 
+// Need to fix...................
+function addRole() {
+	inquirer.prompt(roleQuestions).then((roleData) => {
+		// How to make department id become a name?
+		const addRoleSql = `INSERT INTO role (title, salary, department_id)
+			VALUES (?, ?, ?)`;
+		let params = [roleData.roleTitle, roleData.roleSalary, roleData.roleDepartment];
+		console.log(roleData.roleDepartment);
+		db.query(addRoleSql, params, (err, results) => {
+			if (err) {
+				console.log(err);
+			}
+		});
+		startQuestion();
+	})
+	.catch((error) => {
+		if (error) {
+			console.log(error);
+		}
+	});
+}
+
 // Gets all departments (shows: id, department)
 function getAllDepartments() {
 	const allDepartmentSql = `SELECT * FROM department`;
@@ -181,6 +206,7 @@ function getAllDepartments() {
 function addDepartment() {
 	inquirer.prompt(departmentQuestion).then((departmentData) => {
 		let name = departmentData.departmentName;
+		departmentArray.push(name);
 		const addDepartmentSql = `INSERT INTO department (name)
 			VALUES (?)`;
 		db.query(addDepartmentSql, name, (err, results) => {
