@@ -22,8 +22,6 @@ const db = mysql.createConnection(
 	console.log(`Connected to the business_db database.`)
 );
 
-// let departmentArray = [];
-
 // An array of a question that asks user what they would like to do
 const whatToDoQuestion = [
 	{
@@ -54,21 +52,7 @@ const employeeQuestions = [
 		message: "What is the employee's last name?",
 		name: "employeeLastName",
 	},
-	{
-		type: "list",
-		message: "What is the employee's role?",
-		name: "employeeRole",
-		choices: [],
-	},
-	{
-		type: "list",
-		message: "Who is the employee's manager?",
-		name: "employeeManager",
-		choice: [],
-	},
 ];
-
-
 
 // Adding role questions
 const roleQuestions = [
@@ -85,9 +69,7 @@ const roleQuestions = [
 
 ];
 
-// console.log(roleQuestions);
-// console.log(roleQuestions[2]);
-
+// Adding department question
 const departmentQuestion = [
 	{
 		type: "input",
@@ -131,7 +113,7 @@ function startQuestion() {
 
 // Gets all employees (shows id, first name, last name, title, department, salary, manager's full name or null if no manager)
 function getAllEmployees() {
-	const sql = `SELECT e1.id, e1.first_name, e1.last_name, roles.title, departments.name AS department, roles.salary, CONCAT(e2.first_name,' ', e2.last_name) AS manager
+	const sql = `SELECT e1.id, e1.first_name, e1.last_name, roles.title, departments.name AS department, roles.salary, CONCAT(e2.first_name," ", e2.last_name) AS manager
 	FROM (((employees e1
 	LEFT JOIN roles ON e1.role_id = roles.id)
 	LEFT JOIN departments ON roles.department_id = departments.id)
@@ -141,29 +123,86 @@ function getAllEmployees() {
 			console.log(err);
 			return;
 		}
+
+		// Prints out table of all employees
 		let allEmployeeTable = consoleTable.getTable(rows);
 		console.log(`\n\n${allEmployeeTable}`);
 	});
 	startQuestion();
 }
 
+// TODO: Adding the option of no manager *****************
+// Adds employee to the database
 function addEmployee() {
-	inquirer.prompt(employeeQuestions).then((employeeData) => {
-		// How to make department id become a name?
-		const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)
-			VALUES (?, ?, ?, ?)`;
-		let params = [employeeData.employeeFirstName, employeeData.employeeLastName, employeeData.employeeRole, employeeData.employeeManager];
-		db.query(sql, params, (err, results) => {
-			if (err) {
-				console.log(err); 
-			}
-		});
-		startQuestion();
-	})
-	.catch((error) => {
-		if (error) {
-			console.log(error);
+	// Grabs all roles
+	const roleSql = `SELECT * FROM roles`;
+	db.query(roleSql, (err, results) => {
+		if (err) {
+			console.log(err);
 		}
+
+		// Maps results to a new array
+		let rolesArray = results.map(role => {
+			return {
+				name: role.title,
+				salary: role.salary,
+				department: role.department_id,
+				value: role.id,
+			};
+		});
+
+		// Creates role question
+		let eRoleQuestion = {
+			type: "list",
+			message: "What is the employee's role?",
+			name: "employeeRole",
+			choices: rolesArray,
+		};
+
+		// Grabs all managers
+		const managerSql = `SELECT *
+		FROM employees
+		WHERE (id IN (SELECT manager_id FROM employees));`
+		db.query(managerSql, (err, results) => {
+			if (err) {
+				console.log(err);
+			}
+			
+			// Maps results to new array
+			let managersArray = results.map(manager => {
+				return {
+					name: manager.first_name + " " + manager.last_name,
+					value: manager.id,
+				};
+			});
+
+			// Creates manager question
+			let eManagerQuestion = {
+				type: "list",
+				message: "Who is the employee's manager?",
+				name: "employeeManager",
+				choices: managersArray,
+			};
+
+			// questionsToAsk holds all questions to create new employee
+			let questionsToAsk = [...employeeQuestions, eRoleQuestion, eManagerQuestion];
+			inquirer.prompt(questionsToAsk).then((employeeData) => {
+				
+				// Takes data from questions and makes new employee
+				const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)
+					VALUES (?, ?, ?, ?)`;
+
+				let params = [employeeData.employeeFirstName, employeeData.employeeLastName, employeeData.employeeRole, employeeData.employeeManager];
+				db.query(sql, params, (err, results) => {
+					if (err) {
+						console.log(err); 
+					}
+				});
+
+				// Restarts previous prompt
+				startQuestion();
+			})
+		})
 	});
 }
 
@@ -183,13 +222,17 @@ function getAllRoles() {
 			console.log(err);
 			return;
 		}
+
+		// Prints out table of all roles
 		let allRoleTable = consoleTable.getTable(rows);
 		console.log(`\n\n${allRoleTable}`);
 	});
+
+	// Restarts previous prompt
 	startQuestion();
 }
 
-// FIXED...................
+// Adds new role to database
 function addRole() {
 	// Grabs all deportment and store into the lists
 	const departmentSql = `SELECT * FROM departments`;
@@ -197,34 +240,16 @@ function addRole() {
 		if (err) {
 			console.log(err);
 		}
-		// let departmentsArray = results;
 
-		console.log(results);
-		// Output:
-		// { id: 1, name: 'Engineering' },
-		// { id: 2, name: 'Finance' },
-		// { id: 3, name: 'Legal' },
-		// { id: 4, name: 'Sales' }
+		// Maps results to new array
 		let departmentsArray = results.map(department => {
 			return {
 				name: department.name,
-				value: department.id
+				value: department.id,
 			};
 	 	});
-		console.log(departmentsArray);
-		// [
-		// 	{ name: 'Engineering', value: 1 },
-		// 	{ name: 'Finance', value: 2 },
-		// 	{ name: 'Legal', value: 3 },
-		// 	{ name: 'Sales', value: 4 }
-		// ]
-		// console.log(results.name); undefined
-		// console.log(Object.keys(results));
-		// // Output:
-		// // [ '0', '1', '2', '3' ]
-		// Object.keys(results);
-		
 
+		// Creates new question to add to inquirer
 		let newQuestion = {
 				type: "list",
 				message: "Which department will this role be under?",
@@ -232,25 +257,23 @@ function addRole() {
 				choices: departmentsArray,
 		};
 		
-		// Adds a question to the roleQuestions
+		// New array that holds the roleQuestions AND newQuestion
 		let questionsToAsk = [...roleQuestions, newQuestion];
 
-		
+		// Prompt with the questionsToAsk
 		inquirer.prompt(questionsToAsk).then((roleData) => {
-			console.log("roleData: " + roleData);
 			const addRoleSql = `INSERT INTO roles (title, salary, department_id)
 				VALUES (?, ?, ?)`;
 
-
-			console.log(`roleData.departmentChoice.id: ${roleData.roleDepartment}`)
-			// Grabs data
+			// Grabs data and put into query
 			let params = [roleData.roleTitle, roleData.roleSalary, roleData.roleDepartment];
-
 			db.query(addRoleSql, params, (err, results) => {
 				if (err) {
 					console.log(err);
 				}
 			});
+
+			// Restarts previous prompt
 			startQuestion();
 		});
 	})
@@ -265,9 +288,13 @@ function getAllDepartments() {
 			console.log(err);
 			return;
 		}
+
+		// Prints out table of all departments
 		let allDepartmentTable = consoleTable.getTable(rows);
 		console.log(`\n\n${allDepartmentTable}`);
 	});
+
+	// Restarts previous prompt
 	startQuestion();
 }
 
@@ -282,13 +309,10 @@ function addDepartment() {
 				console.log(err);
 			}
 		});
+
+		// Restarts previous prompt
 		startQuestion();
 	})
-	.catch((error) => {
-		if (error) {
-			console.log(error);
-		}
-	});
 }
 
 // Calls this function to begin prompting user with the question
