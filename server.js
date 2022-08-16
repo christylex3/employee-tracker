@@ -96,7 +96,7 @@ function startQuestion() {
 			} else if (data.userAnswer == "Add Employee") {
 				// addEmployee();
 			} else if (data.userAnswer == "Update Employee") {
-				// updatEmployee();
+				// updateEmployee();
 			} else if (data.userAnswer == "View All Roles") {
 				getAllRoles();
 			} else if (data.userAnswer == "Add Role") {
@@ -107,8 +107,8 @@ function startQuestion() {
 				addDepartment();
 			} else {
 				console.log("Goodbye.");
+				process.exit();
 			}
-		
 		})
 		// If there is an error, catch the error and print it
 		.catch((error) => {
@@ -160,6 +160,7 @@ function getAllRoles() {
 		let allRoleTable = consoleTable.getTable(rows);
 		console.log(`\n\n${allRoleTable}`);
 	});
+	startQuestion();
 }
 
 // Gets all departments (shows: id, department)
