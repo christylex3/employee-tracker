@@ -4,7 +4,7 @@ const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const consoleTable = require("console.table");
 
-const PORT = process.env.PORT || 3001;
+// const PORT = process.env.PORT || 3001;
 const app = express();
 
 // Express middleware
@@ -31,7 +31,7 @@ const whatToDoQuestion = [
 		choices: [
 			"View All Employees",
 			"Add Employee",
-			"Update Employee",
+			"Update Employee's Role",
 			"View All Roles",
 			"Add Role",
 			"View All Departments",
@@ -53,6 +53,21 @@ const employeeQuestions = [
 		name: "employeeLastName",
 	},
 ];
+
+const employeeUpdateQuestions = [
+	{
+		type: "list",
+		message: "Which employee do you want to update?",
+		name: "employee",
+		choices: [],
+	},
+	{
+		type: "input",
+		message: "Which role do you want the employee to be assigned to?",
+		name: "roleChange",
+		choices: [],
+	},
+]
 
 // Adding role questions
 const roleQuestions = [
@@ -88,8 +103,8 @@ function startQuestion() {
 				getAllEmployees();
 			} else if (data.userAnswer == "Add Employee") {
 				addEmployee();
-			} else if (data.userAnswer == "Update Employee") {
-				// updateEmployee();
+			} else if (data.userAnswer == "Update Employee's Role") {
+				updateEmployeeRole();
 			} else if (data.userAnswer == "View All Roles") {
 				getAllRoles();
 			} else if (data.userAnswer == "Add Role") {
@@ -114,10 +129,10 @@ function startQuestion() {
 // Gets all employees (shows id, first name, last name, title, department, salary, manager's full name or null if no manager)
 function getAllEmployees() {
 	const sql = `SELECT e1.id, e1.first_name, e1.last_name, roles.title, departments.name AS department, roles.salary, CONCAT(e2.first_name," ", e2.last_name) AS manager
-	FROM (((employees e1
-	LEFT JOIN roles ON e1.role_id = roles.id)
-	LEFT JOIN departments ON roles.department_id = departments.id)
-	LEFT JOIN employees e2 ON e1.manager_id = e2.id)`;
+		FROM (((employees e1
+		LEFT JOIN roles ON e1.role_id = roles.id)
+		LEFT JOIN departments ON roles.department_id = departments.id)
+		LEFT JOIN employees e2 ON e1.manager_id = e2.id)`;
 	db.query(sql, (err, rows) => {
 		if (err) {
 			console.log(err);
@@ -145,8 +160,6 @@ function addEmployee() {
 		let rolesArray = results.map(role => {
 			return {
 				name: role.title,
-				salary: role.salary,
-				department: role.department_id,
 				value: role.id,
 			};
 		});
@@ -159,10 +172,9 @@ function addEmployee() {
 			choices: rolesArray,
 		};
 
-		// Grabs all managers
-		const managerSql = `SELECT *
-		FROM employees
-		WHERE (id IN (SELECT manager_id FROM employees));`
+		// Grabs all employees (any employee can be manager)
+		const managerSql = `SELECT * FROM employees`;
+		// WHERE (id IN (SELECT manager_id FROM employees));`
 		db.query(managerSql, (err, results) => {
 			if (err) {
 				console.log(err);
@@ -174,6 +186,11 @@ function addEmployee() {
 					name: manager.first_name + " " + manager.last_name,
 					value: manager.id,
 				};
+			});
+
+			managersArray.push({
+				name: "None",
+				value: null,
 			});
 
 			// Creates manager question
@@ -206,11 +223,68 @@ function addEmployee() {
 	});
 }
 
-// function updateEmployeeRole() {
-// 	inquirer.prompt().then((data) => {
-// 		const sql = `UPDATE employee SET role = ? WHERE id = ? `;
-// 	})
-// }
+function updateEmployeeRole() {
+	const employeeSql = `SELECT * FROM employees`;
+	db.query(employeeSql, (err, results) => {
+		if (err) {
+			console.log(err);
+		}
+
+		// Maps results to new array
+		let employeesArray = results.map(employee => {
+			return {
+				name: employee.first_name + " " + employee.last_name,
+				value: employee.id,
+			};
+	 	});
+
+		let employeeSelection = {
+			type: "list",
+			message: "Which employee do you want to update?",
+			name: "employeeSelected",
+			choices: employeesArray,
+		};
+
+		// Grabs all roles
+		const roleSql = `SELECT * FROM roles`;
+		db.query(roleSql, (err, results) => {
+			if (err) {
+				console.log(err);
+			}
+
+			// Maps results to a new array
+			let rolesArray = results.map(role => {
+				return {
+					name: role.title,
+					// salary: role.salary,
+					// department: role.department_id,
+					value: role.id,
+				};
+			});
+
+			// Creates role question
+			let roleSelection = {
+				type: "list",
+				message: "What is the employee's role?",
+				name: "roleSelected",
+				choices: rolesArray,
+			};
+
+			let questionsToAsk = [employeeSelection, roleSelection]
+
+			inquirer.prompt(questionsToAsk).then((data) => {
+				const sql = `UPDATE employees SET role_id = ? WHERE id = ? `;
+				let params = [data.roleSelected, data.employeeSelected];
+				db.query(sql, params, (err, results) => {
+					if (err) {
+						console.log(err);
+					}
+				})
+				startQuestion();
+			})
+		})
+	})
+}
 
 // Gets all roles (shows: id, title, department, salary)
 function getAllRoles() {
