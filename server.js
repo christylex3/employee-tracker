@@ -146,7 +146,6 @@ function getAllEmployees() {
 	startQuestion();
 }
 
-// TODO: Adding the option of no manager *****************
 // Adds employee to the database
 function addEmployee() {
 	// Grabs all roles
@@ -188,6 +187,7 @@ function addEmployee() {
 				};
 			});
 
+			// Adds none option for no manager
 			managersArray.push({
 				name: "None",
 				value: null,
@@ -208,7 +208,6 @@ function addEmployee() {
 				// Takes data from questions and makes new employee
 				const sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)
 					VALUES (?, ?, ?, ?)`;
-
 				let params = [employeeData.employeeFirstName, employeeData.employeeLastName, employeeData.employeeRole, employeeData.employeeManager];
 				db.query(sql, params, (err, results) => {
 					if (err) {
@@ -223,6 +222,7 @@ function addEmployee() {
 	});
 }
 
+// Updates the employee's role
 function updateEmployeeRole() {
 	const employeeSql = `SELECT * FROM employees`;
 	db.query(employeeSql, (err, results) => {
@@ -238,6 +238,7 @@ function updateEmployeeRole() {
 			};
 	 	});
 
+		// Creates a question about selecting employee
 		let employeeSelection = {
 			type: "list",
 			message: "Which employee do you want to update?",
@@ -256,8 +257,6 @@ function updateEmployeeRole() {
 			let rolesArray = results.map(role => {
 				return {
 					name: role.title,
-					// salary: role.salary,
-					// department: role.department_id,
 					value: role.id,
 				};
 			});
@@ -270,8 +269,10 @@ function updateEmployeeRole() {
 				choices: rolesArray,
 			};
 
+			// questionsToAsk combines all question pertaining to updating the employee's role
 			let questionsToAsk = [employeeSelection, roleSelection]
 
+			// Prompts user with questions
 			inquirer.prompt(questionsToAsk).then((data) => {
 				const sql = `UPDATE employees SET role_id = ? WHERE id = ? `;
 				let params = [data.roleSelected, data.employeeSelected];
@@ -280,6 +281,8 @@ function updateEmployeeRole() {
 						console.log(err);
 					}
 				})
+
+				// Restarts previous prompt
 				startQuestion();
 			})
 		})
@@ -351,7 +354,6 @@ function addRole() {
 			startQuestion();
 		});
 	})
-
 }
 
 // Gets all departments (shows: id, department)
